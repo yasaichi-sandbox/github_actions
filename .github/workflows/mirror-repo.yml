@@ -3,12 +3,12 @@ name: Mirror repo
 on: [push]
 
 jobs:
-  build:
-
+  main:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v1
+
     - name: Setup the SSH key
       env:
         MIRROR_REPO_HOST: gitlab.com
@@ -21,9 +21,10 @@ jobs:
 
     - name: Mirror the repository
       env:
+        GIT_SSH_COMMAND: ssh -i ~/.ssh/mirror_repo -F /dev/null
         MIRROR_REPO: git@gitlab.com:yasaichi/github_actions.git
       run: |
         git remote add mirror "$MIRROR_REPO"
-        git -c core.sshCommand="ssh -i ~/.ssh/mirror_repo -F /dev/null" push \
-          --force mirror "refs/remotes/origin/*:refs/heads/*"
+        git push --force --prune mirror "refs/remotes/origin/*:refs/heads/*"
+        git push --force --prune mirror "refs/tags/*:refs/tags/*"
 
