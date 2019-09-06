@@ -1,0 +1,29 @@
+name: Mirror repo
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Setup the SSH key
+      env:
+        MIRROR_REPO_HOST: gitlab.com
+        MIRROR_REPO_SSH_KEY: ${{ secrets.GITLAB_DEPLOY_KEY }}
+      run: |
+        mkdir ~/.ssh
+        echo "$MIRROR_REPO_SSH_KEY" > ~/.ssh/mirror_repo
+        chmod 600 ~/.ssh/mirror_repo
+        ssh-keyscan -H "$MIRROR_REPO_HOST" >> ~/.ssh/known_hosts
+
+    - name: Mirror the repository
+      env:
+        MIRROR_REPO: git@gitlab.com:yasaichi/github_actions.git
+      run: |
+        git remote add mirror "$MIRROR_REPO"
+        git -c core.sshCommand="ssh -i ~/.ssh/mirror_repo -F /dev/null" push \
+          --force mirror "refs/remotes/origin/*:refs/heads/*"
+
